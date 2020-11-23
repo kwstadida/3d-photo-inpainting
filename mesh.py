@@ -2246,7 +2246,7 @@ def output_3d_photo(verts, colors, faces, Height, Width, hFov, vFov, tgt_poses, 
                 normal_canvas.reinit_camera(fov)
             normal_canvas.view_changed()
             img = normal_canvas.render()
-            img = cv2.GaussianBlur(img,(int(init_factor//2 * 2 + 1), int(init_factor//2 * 2 + 1)), 0)
+            # img = cv2.GaussianBlur(img,(int(init_factor//2 * 2 + 1), int(init_factor//2 * 2 + 1)), 0)
             img = cv2.resize(img, (int(img.shape[1] / init_factor), int(img.shape[0] / init_factor)), interpolation=cv2.INTER_AREA)
             img = img[anchor[0]:anchor[1], anchor[2]:anchor[3]]
             img = img[int(border[0]):int(border[1]), int(border[2]):int(border[3])]
@@ -2283,14 +2283,66 @@ def output_3d_photo(verts, colors, faces, Height, Width, hFov, vFov, tgt_poses, 
         """
         atop = 0; abuttom = img.shape[0] - img.shape[0] % 2; aleft = 0; aright = img.shape[1] - img.shape[1] % 2
         crop_stereos = []
-        for stereo in stereos:
+
+        for s, stereo in enumerate(stereos):
+            # import ipdb;
+            # ipdb.set_trace()
+            ##########################################################################################
+            # os.makedirs(f'aug_images_annotated/{video_basename}_{video_traj_type}', exist_ok=True)
+            path = f'aug_images_no_annotated/{video_basename}_{s}_{video_traj_type}.jpg'  # path = f'aug_images_annotated/{video_basename}_{video_traj_type}/{video_basename}_{s}_{video_traj_type}.jpg'
+            img_write = (stereo[atop:abuttom, aleft:aright, :3] * 1).astype(np.uint8)
+            img_write = cv2.cvtColor(img_write, cv2.COLOR_RGB2BGR)
+
+            if video_traj_type == 'dolly-zoom-in' or video_traj_type == 'zoom-in':
+                if s == 239:
+                    cv2.imwrite(path, img_write)
+                    break
+            if video_traj_type == 'circle':
+                if s == 100 or s == 200:
+                    cv2.imwrite(path, img_write)
+                    if s == 200:
+                        break
+
+            if video_traj_type == 'swing':
+                if s == 115 or s == 239:
+                    cv2.imwrite(path, img_write)
+                    if s == 239:
+                        break
+
+            # if s == rndm2 or s == rndm1:
+            #     if s == max_randm:
+            #         cv2.imwrite(path, img_write)
+            #         break
+            #     else:
+            #         continue
+
+            # with open(f"headpoints/{video_basename}_{video_traj_type}.txt", "a+") as f:
+            #     f.seek(0)
+            #     data = f.read()
+            #     # import ipdb; ipdb.set_trace()
+            #     # if len(data) > 0:
+            #     #     f.write("\n")
+            #     # Append text at the end of file
+            #     # x, y, z = coords[s][0], coords[s][1], coords[s][2]
+            #     # dx, dy, dz = coords[s][0]-coords[s+1][0], coords[s][1]-coords[s+1][1], coords[s][2]-coords[s+1][2]
+            #     # u = dx/dz
+            #     # v = dy/dz
+            #     x_shift, y_shift, z_shift, smthng = video_pose[s][0], video_pose[s][1], video_pose[s][2], video_pose[s][3]
+            #     f.write(f'{x_shift}\n')
+            #     f.write(f'{y_shift}\n')
+            #     f.write(f'{z_shift}\n')
+            #     f.write(f'{smthng}\n')
+            #     f.write('#\n')
+            #     # import ipdb; ipdb.set_trace()
+
+            ###########################################################################################
             crop_stereos.append((stereo[atop:abuttom, aleft:aright, :3] * 1).astype(np.uint8))
             stereos = crop_stereos
+        # import  ipdb; ipdb.set_trace()
         clip = ImageSequenceClip(stereos, fps=config['fps'])
-        if isinstance(video_basename, list):
-            video_basename = video_basename[0]
-        clip.write_videofile(os.path.join(output_dir, video_basename + '_' + video_traj_type + '.mp4'), fps=config['fps'])
-
-
+        # import ipdb; ipdb.set_trace()
+        # if isinstance(video_basename, list):
+        #     video_basename = video_basename[0]
+        # clip.write_videofile(os.path.join(output_dir, video_basename + '_' + video_traj_type + '.mp4'), fps=config['fps'])
 
     return normal_canvas, all_canvas

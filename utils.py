@@ -49,6 +49,8 @@ def path_planning(num_frames, x, y, z, path_type=''):
             zs += [np.cos(bs_shift_val * np.pi/2.) * 1 * z]
         xs, ys, zs = np.array(xs), np.array(ys), np.array(zs)
 
+    # import ipdb; ipdb.set_trace()
+
     return xs, ys, zs
 
 def open_small_mask(mask, context, open_iteration, kernel):
@@ -845,16 +847,21 @@ def get_MiDaS_samples(image_folder, depth_folder, config, specific=None, aft_cer
                'video_postfix' should be equal."
     tgt_pose = [[generic_pose * 1]]
     tgts_poses = []
+    coords = []                     #######      HERE
     for traj_idx in range(len(config['traj_types'])):
         tgt_poses = []
         sx, sy, sz = path_planning(config['num_frames'], config['x_shift_range'][traj_idx], config['y_shift_range'][traj_idx],
                                    config['z_shift_range'][traj_idx], path_type=config['traj_types'][traj_idx])
+        # import ipdb; ipdb.set_trace()
         for xx, yy, zz in zip(sx, sy, sz):
+            coords.append([xx, yy, zz])   #########   HERE
+            # import ipdb;
+            # ipdb.set_trace()
             tgt_poses.append(generic_pose * 1.)
             tgt_poses[-1][:3, -1] = np.array([xx, yy, zz])
-        tgts_poses += [tgt_poses]    
+        tgts_poses += [tgt_poses]
+        # import ipdb; ipdb.set_trace()
     tgt_pose = generic_pose * 1
-    
     aft_flag = True
     if aft_certain is not None and len(aft_certain) > 0:
         aft_flag = False
@@ -879,10 +886,13 @@ def get_MiDaS_samples(image_folder, depth_folder, config, specific=None, aft_cer
         sdict['ref_pose'] = np.eye(4)
         sdict['tgt_pose'] = tgt_pose
         sdict['tgts_poses'] = tgts_poses
+        sdict['coords'] = coords                                       ############   HERE
         sdict['video_postfix'] = config['video_postfix']
         sdict['tgt_name'] = [os.path.splitext(os.path.basename(sdict['depth_fi']))[0]]
         sdict['src_pair_name'] = sdict['tgt_name'][0]
 
+        # import ipdb
+        # ipdb.set_trace()
     return samples
 
 def get_valid_size(imap):
